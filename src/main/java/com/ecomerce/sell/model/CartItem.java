@@ -1,26 +1,23 @@
-package com.ecomerce.sell.mdoel;
+package com.ecomerce.sell.model;
 
-import com.ecomerce.sell.mdoel.base.BaseEntity;
+import com.ecomerce.sell.model.base.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Entity
-@Table(name = "order_items")
+@Table(name = "carts")
 @Data
 @NoArgsConstructor
-public class OrderItem extends BaseEntity {
+public class CartItem extends BaseEntity {
 
     @ManyToOne
-    private Order order;
+    private Users user;
 
     @ManyToOne
     private Product product;
 
     private int quantity;
-    private BigDecimal price;
 }

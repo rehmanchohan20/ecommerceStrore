@@ -1,6 +1,6 @@
 package com.ecomerce.sell.repository;
 
-import com.ecomerce.sell.mdoel.Users;
+import com.ecomerce.sell.model.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

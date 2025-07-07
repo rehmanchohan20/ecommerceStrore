@@ -1,4 +1,4 @@
-package com.ecomerce.sell.mdoel.base;
+package com.ecomerce.sell.model.base;
 
 import jakarta.persistence.*;
 import lombok.Data;

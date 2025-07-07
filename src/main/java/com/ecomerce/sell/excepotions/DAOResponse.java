@@ -8,7 +8,9 @@ public enum DAOResponse {
     SUCCESS("VHR_SUCCESS_00", "Success"),
     INVALID_REQUEST("VHR_ERROR_97", "Invalid request"),
     SYSTEM_ERROR("VHR_ERROR_98","System Under Maintenance" ),
-    NO_DATA_FOUND("VHR_ERROR_2","No Data Found" );
+    NO_DATA_FOUND("VHR_ERROR_2","No Data Found" ),
+    USER_NOT_ACTIVE("VHR_ERROR_06", "User is not active"),
+    INVALID_CREDENTIALS("VHR_ERROR_07", "Invalid credentials"),;
 
     private final String code;
     private final String message;

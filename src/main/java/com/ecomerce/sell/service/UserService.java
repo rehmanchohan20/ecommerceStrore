@@ -1,7 +1,6 @@
 package com.ecomerce.sell.service;
 
-import com.ecomerce.sell.mdoel.Users;
-import com.ecomerce.sell.mdoel.Vos.UsersVo;
+import com.ecomerce.sell.model.Vos.UsersVo;
 import com.ecomerce.sell.util.response.Response;
 
 public interface UserService {

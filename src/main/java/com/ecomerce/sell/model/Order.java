@@ -1,10 +1,9 @@
-package com.ecomerce.sell.mdoel;
+package com.ecomerce.sell.model;
 
-import com.ecomerce.sell.mdoel.base.BaseEntity;
+import com.ecomerce.sell.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.catalina.User;
 
 import java.math.BigDecimal;
 import java.util.List;

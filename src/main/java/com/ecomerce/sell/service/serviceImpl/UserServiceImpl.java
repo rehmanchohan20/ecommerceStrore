@@ -1,18 +1,25 @@
 package com.ecomerce.sell.service.serviceImpl;
 
 import com.ecomerce.sell.excepotions.DAOResponse;
-import com.ecomerce.sell.mdoel.Users;
-import com.ecomerce.sell.mdoel.Vos.UsersVo;
+import com.ecomerce.sell.model.Role;
+import com.ecomerce.sell.model.Users;
+import com.ecomerce.sell.model.Vos.UsersVo;
+import com.ecomerce.sell.repository.RoleRepository;
 import com.ecomerce.sell.repository.UserRepository;
 import com.ecomerce.sell.service.UserService;
+import com.ecomerce.sell.util.AuthUtils;
 import com.ecomerce.sell.util.response.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 
@@ -22,10 +29,16 @@ public class UserServiceImpl implements UserService {
     private static final Logger logger = Logger.getLogger(UserServiceImpl.class.getName());
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
+
 
     @Override
     public Response getAllUsers(int pageSize, int pageNumber) {
@@ -57,6 +70,7 @@ public class UserServiceImpl implements UserService {
     public Response saveUser(UsersVo userVo) {
         Response response = new Response();
         Users user = new Users();
+        Long userId = AuthUtils.getCurrentUserId();
 
         try {
             if (userVo == null) {
@@ -64,30 +78,43 @@ public class UserServiceImpl implements UserService {
                 return response;
             }
 
+            // Create new user
             if (userVo.getId() == null) {
-                Users existingByEmail = userRepository.findByEmail(userVo.getEmail());
-                if (existingByEmail != null) {
+                // Email and username validation
+                if (userRepository.findByEmail(userVo.getEmail()) != null) {
                     response.setCode("400");
                     response.setMessage("User with email " + userVo.getEmail() + " already exists");
                     return response;
                 }
 
-                Users existingByUsername = userRepository.findByUsername(userVo.getUsername());
-                if (existingByUsername != null) {
+                if (userRepository.findByUsername(userVo.getUsername()) != null) {
                     response.setCode("400");
                     response.setMessage("User with username " + userVo.getUsername() + " already exists");
                     return response;
                 }
 
+                // Basic fields
                 user.setUsername(userVo.getUsername());
-                user.setPassword(userVo.getPassword());
+                user.setPassword(passwordEncoder.encode(userVo.getPassword()));
                 user.setEmail(userVo.getEmail());
                 user.setIsActive(userVo.getActive());
                 user.setPhoneNumber(userVo.getPhoneNumber());
                 user.setAddress(userVo.getAddress());
                 user.setIsAdmin(false);
                 user.setIsBuyer(userVo.getIsBuyer() != null ? userVo.getIsBuyer() : false);
-                user.setCreatedBy("self");
+                user.setCreatedBy(String.valueOf(userId));
+
+                // 🔁 Set roles
+                if (userVo.getRoles() != null && !userVo.getRoles().isEmpty()) {
+                    Set<Role> roles = new HashSet<>();
+                    for (String roleName : userVo.getRoles()) {
+                        Role role = roleRepository.findByName(roleName);
+                        if (role != null) {
+                            roles.add(role);
+                        }
+                    }
+                    user.setRoles(roles);
+                }
 
                 Users savedUser = userRepository.save(user);
                 UsersVo usersVo = UsersVo.getAllUsers(savedUser);
@@ -96,17 +123,30 @@ public class UserServiceImpl implements UserService {
                 return response;
             }
 
+            // Update existing user
             else {
                 Users existingUser = userRepository.findById(userVo.getId()).orElse(null);
                 if (existingUser != null) {
                     existingUser.setUsername(userVo.getUsername());
-                    existingUser.setPassword(userVo.getPassword());
+                    existingUser.setPassword(passwordEncoder.encode(userVo.getPassword()));
                     existingUser.setEmail(userVo.getEmail());
-                    existingUser.setUpdatedBy("admin");
+                    existingUser.setUpdatedBy(String.valueOf(userId));
                     existingUser.setPhoneNumber(userVo.getPhoneNumber());
                     existingUser.setAddress(userVo.getAddress());
                     existingUser.setIsBuyer(userVo.getIsBuyer());
                     existingUser.setIsActive(userVo.getActive());
+
+                    // 🔁 Update roles
+                    if (userVo.getRoles() != null && !userVo.getRoles().isEmpty()) {
+                        Set<Role> roles = new HashSet<>();
+                        for (String roleName : userVo.getRoles()) {
+                            Role role = roleRepository.findByName(roleName);
+                            if (role != null) {
+                                roles.add(role);
+                            }
+                        }
+                        existingUser.setRoles(roles);
+                    }
 
                     Users updatedUser = userRepository.save(existingUser);
                     UsersVo usersVo = UsersVo.getAllUsers(updatedUser);
@@ -126,14 +166,16 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
+
     @Override
     public  Response deleteUser(Long userId) {
         Response response = new Response();
         try {
             Users user = userRepository.findById(userId).orElse(null);
             if (user != null) {
-                user.setIsActive(user.getIsActive());
-                userRepository.delete(user);
+                user.setIsActive(false);
+                user.setUpdatedBy(String.valueOf(userId));
+                userRepository.save(user);
                 response.setResponse(DAOResponse.SUCCESS);
             } else {
                 response.setResponse(DAOResponse.USER_NOT_FOUND);

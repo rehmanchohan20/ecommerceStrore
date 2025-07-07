@@ -1,10 +1,7 @@
-package com.ecomerce.sell.mdoel;
+package com.ecomerce.sell.model;
 
-import com.ecomerce.sell.mdoel.base.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.ecomerce.sell.model.base.BaseEntity;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,8 +18,10 @@ public class Product extends BaseEntity {
     private BigDecimal price;
     private int stockQuantity;
     private String imageUrl;
+    private String imageStr;
+    private Boolean isActive;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
 }
