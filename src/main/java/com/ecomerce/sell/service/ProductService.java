@@ -9,4 +9,6 @@ public interface ProductService {
     Response createProduct(ProductVo productVo);
     Response deleteProduct(Long productId);
     Response getProductById(Long productId);
+    Response getProductsByCategory(Long categoryId, int pageSize, int pageNumber);
+    Response searchProducts(String searchTerm, int pageSize, int pageNumber);
 }

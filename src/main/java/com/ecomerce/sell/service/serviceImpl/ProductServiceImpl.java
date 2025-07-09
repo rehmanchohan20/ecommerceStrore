@@ -3,24 +3,26 @@ package com.ecomerce.sell.service.serviceImpl;
 import com.ecomerce.sell.excepotions.DAOResponse;
 import com.ecomerce.sell.model.Category;
 import com.ecomerce.sell.model.Product;
-import com.ecomerce.sell.model.Users;
 import com.ecomerce.sell.model.Vos.ProductVo;
 import com.ecomerce.sell.repository.CategoryRepository;
 import com.ecomerce.sell.repository.ProductRepository;
-import com.ecomerce.sell.repository.UserRepository;
 import com.ecomerce.sell.service.ProductService;
 import com.ecomerce.sell.util.AuthUtils;
 import com.ecomerce.sell.util.ImageUtil;
 import com.ecomerce.sell.util.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -28,6 +30,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Override
     public Response getAllProducts(int pageSize, int pageNumber) {
@@ -169,5 +174,101 @@ public class ProductServiceImpl implements ProductService {
         }
             return response;
         }
+
+        //get products by categories and subcategories
+
+    public Response getProductsByCategory(Long categoryId, int pageSize, int pageNumber) {
+        Response response = new Response();
+
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
+
+            Category category = categoryRepository.findCategoriesById(categoryId);
+            if (category == null) {
+                response.setResponse(DAOResponse.NO_DATA_FOUND);
+                response.setMessage("Category not found");
+                return response;
+            }
+
+            // Get all relevant category IDs (including subcategories)
+            List<Long> categoryIds = getAllCategoryIds(category);
+
+            // Fetch products by category IDs
+            Page<Product> productPage = productRepository.findByCategoryIdIn(categoryIds, pageable);
+            List<ProductVo> productVos = productPage.getContent()
+                    .stream()
+                    .map(ProductVo::getAllProducts)
+                    .collect(Collectors.toList());
+
+            if (productVos.isEmpty()) {
+                response.setResponse(DAOResponse.NO_DATA_FOUND);
+            } else {
+                response.setResponse(DAOResponse.SUCCESS);
+                response.setData("products", productVos);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.severe("Error occurred while fetching products by category: " + e.getMessage());
+            response.setResponse(DAOResponse.SYSTEM_ERROR);
+        }
+
+        return response;
+    }
+
+    @Override
+    public Response searchProducts(String searchTerm, int pageSize, int pageNumber) {
+        Response response = new Response();
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
+
+            // Use Page instead of List
+            Page<Product> productPage = productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(searchTerm, searchTerm, pageable);
+
+            List<ProductVo> productVos = productPage.getContent()
+                    .stream()
+                    .map(ProductVo::getAllProducts)
+                    .collect(Collectors.toList());
+
+            if (!productVos.isEmpty()) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("products", productVos);
+                result.put("currentPage", productPage.getNumber());
+                result.put("totalPages", productPage.getTotalPages());
+                result.put("totalItems", productPage.getTotalElements());
+                result.put("pageSize", productPage.getSize());
+                result.put("hasNext", productPage.hasNext());
+                result.put("hasPrevious", productPage.hasPrevious());
+
+                response.setResponse(DAOResponse.SUCCESS);
+                response.setData("pagination", result);
+            } else {
+                response.setResponse(DAOResponse.NO_DATA_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.severe("Error occurred while searching products: " + e.getMessage());
+            response.setResponse(DAOResponse.SYSTEM_ERROR);
+        }
+        return response;
+    }
+
+
+
+
+    public List<Long> getAllCategoryIds(Category parent) {
+        List<Long> ids = new ArrayList<>();
+        ids.add(parent.getId());
+
+        List<Category> subCategories = categoryRepository.findByParentAndActiveTrue(parent);
+        for (Category sub : subCategories) {
+            ids.addAll(getAllCategoryIds(sub)); // Recursively collect subcategory IDs
+        }
+
+        return ids;
+    }
+
+
+
 
 }

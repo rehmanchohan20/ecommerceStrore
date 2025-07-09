@@ -43,4 +43,19 @@ public class ProductController {
         Response response = productService.deleteProduct(productId);
         return ResponseEntity.ok(response);
      }
+
+     // get products by categoryId
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<?> getProductsByCategoryId(@PathVariable Long categoryId, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize, @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber) {
+        Response response = productService.getProductsByCategory(categoryId, pageSize, pageNumber);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchProducts(@RequestParam("query") String query, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize, @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber) {
+        Response response = productService.searchProducts(query, pageSize, pageNumber);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
