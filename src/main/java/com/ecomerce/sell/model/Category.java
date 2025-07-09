@@ -18,6 +18,8 @@ public class Category extends BaseEntity {
 
     private String name;
 
+    private Boolean active;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
