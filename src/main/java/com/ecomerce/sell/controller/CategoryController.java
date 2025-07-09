@@ -33,4 +33,10 @@ public class CategoryController {
         Response response = categoryService.deleteCategory(id);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    //get sub categories by parent id
+    @GetMapping("/subcategories")
+    public ResponseEntity<?> getSubCategoriesByParentId(@Param("parentId") Long parentId) {
+        Response response = categoryService.getSubCategoriesByParentId(parentId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

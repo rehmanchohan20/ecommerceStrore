@@ -253,9 +253,6 @@ public class ProductServiceImpl implements ProductService {
         return response;
     }
 
-
-
-
     public List<Long> getAllCategoryIds(Category parent) {
         List<Long> ids = new ArrayList<>();
         ids.add(parent.getId());
@@ -267,8 +264,5 @@ public class ProductServiceImpl implements ProductService {
 
         return ids;
     }
-
-
-
 
 }

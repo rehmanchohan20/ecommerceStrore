@@ -171,6 +171,25 @@ public class CategoryServiceImpl implements CategoryService {
         return response;
     }
 
+    @Override
+    public Response getSubCategoriesByParentId(Long id){
+        Response response = new Response();
+        try{
+            Category categoriesByIdAndActiveTrue = categoryRepository.findCategoriesByIdAndActiveTrue(id);
+            if (categoriesByIdAndActiveTrue == null) {
+                response.setResponse(DAOResponse.NO_DATA_FOUND);
+            }
+            CategoryVo categoryVo = buildCategoryTree(categoriesByIdAndActiveTrue);
+            response.setResponse(DAOResponse.SUCCESS);
+            response.setData("subCategories", categoryVo);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.severe("Error fetching subcategories: " + e.getMessage());
+        }
+        return response;
+    }
+
 
 
 
