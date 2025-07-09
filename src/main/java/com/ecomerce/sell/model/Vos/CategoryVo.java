@@ -9,6 +9,7 @@ import java.util.List;
 public class CategoryVo {
     private Long id;
     private String name;
+    private Long parentId;
     private List<CategoryVo> subCategories;
 
 

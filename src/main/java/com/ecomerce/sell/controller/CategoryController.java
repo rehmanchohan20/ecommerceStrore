@@ -1,13 +1,13 @@
 package com.ecomerce.sell.controller;
 
+import com.ecomerce.sell.model.Vos.CategoryVo;
 import com.ecomerce.sell.service.CategoryService;
 import com.ecomerce.sell.util.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/categories")
@@ -19,6 +19,18 @@ public class CategoryController {
     @GetMapping()
     public ResponseEntity<?> getAllCategories() {
         Response response = categoryService.getAllCategories();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping()
+    public ResponseEntity<?> addCategory(@RequestBody CategoryVo categoryVo) {
+        Response response = categoryService.addCategory(categoryVo);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/delete")
+    public ResponseEntity<?> deleteCategory(@Param("id") Long id) {
+        Response response = categoryService.deleteCategory(id);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
