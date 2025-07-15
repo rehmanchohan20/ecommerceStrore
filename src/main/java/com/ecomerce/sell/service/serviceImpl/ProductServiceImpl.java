@@ -261,7 +261,6 @@ public class ProductServiceImpl implements ProductService {
         for (Category sub : subCategories) {
             ids.addAll(getAllCategoryIds(sub)); // Recursively collect subcategory IDs
         }
-
         return ids;
     }
 

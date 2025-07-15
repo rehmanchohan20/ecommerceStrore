@@ -13,5 +13,12 @@ public class AuthUtils {
         }
         return null;
     }
+    public static CustomUserDetails getCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            return (CustomUserDetails) principal;
+        }
+        return null;
+    }
 }
 

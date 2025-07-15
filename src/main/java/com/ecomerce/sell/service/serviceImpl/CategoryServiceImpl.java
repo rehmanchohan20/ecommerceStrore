@@ -136,7 +136,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Response deleteCategory(Long id){
+    public Response deleteCategory(Long id, Boolean deleteAllSubCategories) {
         Response response = new Response();
         try{
             if (id == null) {
@@ -146,22 +146,26 @@ public class CategoryServiceImpl implements CategoryService {
             }
 
             Category category = categoryRepository.findCategoriesByIdAndActiveTrue(id);
-            if (category == null) {
+
+            if(category != null){
+                category.setActive(false);
+                category.setUpdatedBy(String.valueOf(AuthUtils.getCurrentUserId()));
+            }else{
                 response.setResponse(DAOResponse.NO_DATA_FOUND);
-                response.setMessage("Category not found");
                 return response;
             }
 
-            category.setActive(false);
+            if (deleteAllSubCategories) {
+                List<Category> subCategories = categoryRepository.findByParentAndActiveTrue(category);
+                for (Category subCategory : subCategories) {
+                    subCategory.setActive(false);
+                    subCategory.setUpdatedBy(String.valueOf(AuthUtils.getCurrentUserId()));
 
-            List<Category> subCategories = categoryRepository.findByParentAndActiveTrue(category);
-            for (Category subCategory : subCategories) {
-                subCategory.setActive(false);
+                }
+                categoryRepository.saveAll(subCategories); // Save all subcategories
             }
-            // Soft delete the category
-            categoryRepository.save(category);              // Save parent
-            categoryRepository.saveAll(subCategories);    // Save subcategories
 
+            categoryRepository.save(category);
             response.setResponse(DAOResponse.SUCCESS);
         } catch (Exception e) {
             e.printStackTrace();
@@ -189,13 +193,6 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return response;
     }
-
-
-
-
-
-
-
 
     private CategoryVo buildCategoryTree(Category category) {
         CategoryVo vo = CategoryVo.fromCategory(category);

@@ -6,6 +6,6 @@ import com.ecomerce.sell.util.response.Response;
 public interface CategoryService {
     Response getAllCategories();
     Response addCategory(CategoryVo categoryVo);
-    Response deleteCategory(Long id);
+    Response deleteCategory(Long id, Boolean deleteAllSubCategories);
     Response getSubCategoriesByParentId(Long id);
 }

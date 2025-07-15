@@ -29,8 +29,8 @@ public class CategoryController {
     }
 
     @PostMapping("/delete")
-    public ResponseEntity<?> deleteCategory(@Param("id") Long id) {
-        Response response = categoryService.deleteCategory(id);
+    public ResponseEntity<?> deleteCategory(@RequestParam("id") Long id, @RequestParam(value = "deleteSubCategories", required = false, defaultValue = "false") Boolean deleteSubCategories) {
+        Response response = categoryService.deleteCategory(id, deleteSubCategories);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     //get sub categories by parent id
