@@ -11,7 +11,8 @@ public enum DAOResponse {
     NO_DATA_FOUND("VHR_ERROR_2","No Data Found" ),
     USER_NOT_ACTIVE("VHR_ERROR_06", "User is not active"),
     INVALID_CREDENTIALS("VHR_ERROR_07", "Invalid credentials"),
-    ALREADY_EXISTS("VHR_ERROR_08", "Already exists"),;
+    ALREADY_EXISTS("VHR_ERROR_08", "Already exists"),
+    UNAUTHORIZED("VHR_ERROR_09", "Unauthorized access"),;
 
     private final String code;
     private final String message;

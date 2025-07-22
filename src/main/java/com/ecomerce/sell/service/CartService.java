@@ -8,4 +8,5 @@ public interface CartService {
     Response getAllItemsForUser(Users users);
     Response add(CartItemVo cartItemVo);
     Response deleteCartItem(Long cartItemId);
+    Response placeOrder(Long userId);
 }

@@ -38,4 +38,11 @@ public class CartController {
         Response response = cartService.deleteCartItem(cartItemId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping("/order")
+    public ResponseEntity<?> placeOrder(){
+        Long userId = AuthUtils.getCurrentUserId();
+        Response response = cartService.placeOrder(userId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

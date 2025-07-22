@@ -1,9 +1,7 @@
 package com.ecomerce.sell.service.serviceImpl;
 
 import com.ecomerce.sell.excepotions.DAOResponse;
-import com.ecomerce.sell.model.CartItem;
-import com.ecomerce.sell.model.Product;
-import com.ecomerce.sell.model.Users;
+import com.ecomerce.sell.model.*;
 import com.ecomerce.sell.model.Vos.CartItemVo;
 import com.ecomerce.sell.model.Vos.UsersVo;
 import com.ecomerce.sell.repository.CartRepository;
@@ -16,10 +14,8 @@ import com.ecomerce.sell.util.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -87,6 +83,7 @@ public class CartServiceImpl implements CartService {
             if (existingCartItem != null) {
                 existingCartItem.setQuantity(existingCartItem.getQuantity() + cartItemVo.getQuantity());
                 existingCartItem.setUpdatedBy(String.valueOf(currentUSerID));
+                existingCartItem.preUpdate();
                 cartRepository.save(existingCartItem);
                 response.setResponse(DAOResponse.SUCCESS);
                 response.setMessage("Cart item updated successfully.");
@@ -110,9 +107,12 @@ public class CartServiceImpl implements CartService {
     @Override
     public Response deleteCartItem(Long cartItemId) {
         Response response = new Response();
+        Long userId = AuthUtils.getCurrentUserId();
         try {
-            CartItem optionalCartItem = cartRepository.getCartItemById(cartItemId);
+            CartItem optionalCartItem = cartRepository.getCartItemByIdAndIsActiveTrue(cartItemId);
             if (optionalCartItem != null) {
+                optionalCartItem.setUpdatedBy(String.valueOf(userId));
+                optionalCartItem.preUpdate();
                 cartRepository.delete(optionalCartItem);
                 response.setResponse(DAOResponse.SUCCESS);
                 response.setMessage("Cart item deleted successfully.");
@@ -126,5 +126,75 @@ public class CartServiceImpl implements CartService {
         }
         return response;
     }
+    public Response placeOrder(Long userId){
+        Response response = new Response();
+        try{
+            Users user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                response.setResponse(DAOResponse.INVALID_REQUEST);
+                response.setMessage("User not found.");
+                return response;
+            }
+            List<CartItem> cartItems = cartRepository.findByUser(user);
+            if (cartItems == null || cartItems.isEmpty()) {
+                response.setResponse(DAOResponse.NO_DATA_FOUND);
+                response.setMessage("No items found in the cart for the user.");
+                return response;
+            }
+
+            Order order = new Order();
+            order.setUser(user);
+            order.setOrderStatus("PENDING");
+            order.setCreatedBy(String.valueOf(userId));
+            order.setTotalAmount(BigDecimal.ZERO);
+            orderRepository.save(order);
+
+            List<OrderItem> itemsToOrder = new ArrayList<>();
+            BigDecimal total = BigDecimal.ZERO;
+            for(CartItem cart : cartItems){
+                OrderItem item = new OrderItem();
+                item.setProduct(cart.getProduct());
+                item.setQuantity(cart.getQuantity());
+                item.setOrder(order);
+                item.setPrice(cart.getProduct().getPrice());
+                itemsToOrder.add(item);
+                total = total.add(cart.getProduct().getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
+            }
+            order.setItems(itemsToOrder);
+            order.setTotalAmount(total);
+            order.setUpdatedBy(String.valueOf(user));
+            order.preUpdate();
+            order.setOrderStatus("PENDING");
+            orderRepository.save(order);
+            // Clear the cart after placing the order
+            cartItems.forEach(cartItem -> {
+                cartItem.setUpdatedBy(String.valueOf(userId));
+                cartItem.setIsActive(false);
+                cartItem.preUpdate();
+            });
+            cartRepository.saveAll(cartItems);
+            Map<String, Object> orderData = new HashMap<>();
+            orderData.put("orderStatus", order.getOrderStatus());
+            orderData.put("totalAmount", order.getTotalAmount());
+            orderData.put("orderItems", itemsToOrder.stream()
+                    .map(item -> {
+                        Map<String, Object> itemData = new HashMap<>();
+                        itemData.put("productId", item.getProduct().getId());
+                        itemData.put("productName", item.getProduct().getName());
+                        itemData.put("quantity", item.getQuantity());
+                        itemData.put("price", item.getPrice());
+                        return itemData;
+                    }).collect(Collectors.toList()));
+
+            response.setResponse(DAOResponse.SUCCESS);
+            response.setMessage("Order placed successfully.");
+            response.setData("orderDetails", orderData);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.severe("Error place order: " + e.getMessage());
+        }
+        return response;
+    }
+
 }
 
