@@ -12,7 +12,7 @@ public class JwtUtil {
     @Value("${jwt.secret.key}")
     private String secretKey;
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 hours
+    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 12; // 12 hours
 
     public String generateToken(String username, String userId, String role) {
         return Jwts.builder()
