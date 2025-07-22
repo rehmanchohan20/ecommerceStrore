@@ -68,6 +68,6 @@ public class PaymentController {
 
     @GetMapping("/failure")
     public String failure() {
-        return "failed to make an order please try again later";
+        return "failed to make an order please try again later IN A WHILE";
     }
 }
